@@ -1,7 +1,15 @@
 variables:
   scheme: 'YourApp'
-  configuration: 'Release'
+  configuration: 'Debug'
   provisioningProfileUuid: '<provisioning_profile_uuid>'
   signingCertificateUuid: '<signing_certificate_uuid>'
   signingCertificateP12: '<signing_certificate_p12>'
   signingCertificatePassword: '$(p12Password)' # Ensure you have defined this variable in the pipeline variables
+  ARCHIVE_BUILD: true
+  CODESIGN_STYLE: Manual
+  KEYCHAIN_NAME: healthapp.keychain-db
+  KEYCHAIN_PW: "encrypted token"
+  START_SIMULATOR: false
+  TARGET_SIMULATOR: iPhone 13
+  TARGET_SIMULATOR_OS: 16.1
+  TARGET_XCODE: 14.1

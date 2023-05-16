@@ -1,0 +1,91 @@
+# dev.yml
+trigger:
+  batch: true
+  branches:
+    include:
+    - fix/*
+    - feat/*
+    - main
+    - development
+  tags:
+    include:
+    - v*
+  paths:
+    exclude:
+    - README.md
+
+pr:
+- main
+
+pool:
+  vmImage: 'macOS-latest'
+
+schedules:
+  - cron: "0 12 * * 0"
+    displayName: Weekly Sunday build
+    always: true
+    branches:
+      include:
+      - main
+
+variables:
+- template: vars/global.yaml
+- template: vars/dev.yaml
+
+
+
+pool:
+  vmImage: 'macOS-latest'
+
+variables:
+- template: vars/global.yaml
+- template: vars/dev.yaml
+
+
+steps:
+  # download automation build scripts
+  - script: |
+        git clone --depth 1 --branch "$REPO_TAG" https://${GITHUB_TOKEN}@github.abbot.com/mobiledevops/automation.git
+        pip3 install --user -r automation/shared_requirements.txt
+
+
+  - task: InstallAppleCertificate@2
+    inputs:
+      certSecureFile: '$(signingCertificateP12)'
+      certPwd: '$(signingCertificatePassword)'
+      keychain: 'temp'
+  
+  - task: InstallAppleProvisioningProfile@1
+    inputs:
+      provisioningProfileLocation: 'secureFiles'
+      provisioningProfileSecureFile: '<provisioning_profile_name>.mobileprovision'
+      removeProfile: true
+  
+  - script: |
+      set -o pipefail
+      
+      xcodebuild clean build-for-testing \
+        -workspace YourApp.xcworkspace \
+        -scheme $(scheme) \
+        -configuration $(configuration) \
+        -sdk iphonesimulator \
+        -destination 'platform=iOS Simulator,name=iPhone 13,OS=15.0' \
+        -derivedDataPath './build'
+  
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/build/test-results/**/*.xml'
+  
+  - task: XcodeArchive@2
+    inputs:
+      archivePath: '$(Build.ArtifactStagingDirectory)/YourApp.xcarchive'
+      exportPath: '$(Build.ArtifactStagingDirectory)/YourApp.ipa'
+      exportOptions: 'specify'
+      exportMethod: 'ad-hoc'
+      exportOptionsPlist: '$(System.DefaultWorkingDirectory)/exportOptions.plist'
+  
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)/YourApp.ipa'
+      ArtifactName: 'drop'
