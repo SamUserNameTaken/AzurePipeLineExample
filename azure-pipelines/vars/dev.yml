@@ -1,0 +1,7 @@
+variables:
+  scheme: 'YourApp'
+  configuration: 'Release'
+  provisioningProfileUuid: '<provisioning_profile_uuid>'
+  signingCertificateUuid: '<signing_certificate_uuid>'
+  signingCertificateP12: '<signing_certificate_p12>'
+  signingCertificatePassword: '$(p12Password)' # Ensure you have defined this variable in the pipeline variables
